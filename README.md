@@ -4,6 +4,11 @@ This repository contains the materials for Project 2.
 
 The goal of this project is to clean and summarize daily air quality data from 2018–2020, and create exploratory plots.
 
+## GitHub Repository
+
+My project repository is available here:  
+[https://github.com/Kate20311-duke/Chen_Kaiyan_Project2.git](https://github.com/Kate20311-duke/Chen_Kaiyan_Project2.git)
+
 ---
 
 ## Files in the repo

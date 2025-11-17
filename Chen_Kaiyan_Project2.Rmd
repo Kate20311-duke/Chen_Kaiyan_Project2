@@ -7,6 +7,11 @@ output:
   html_document: default
 ---
 
+## GitHub Repository
+
+My project repository is available here:  
+[https://github.com/Kate20311-duke/Chen_Kaiyan_Project2.git](https://github.com/Kate20311-duke/Chen_Kaiyan_Project2.git)
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = FALSE,     
