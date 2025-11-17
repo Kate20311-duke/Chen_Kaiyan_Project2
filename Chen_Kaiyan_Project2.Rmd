@@ -133,7 +133,7 @@ p1 <- ggplot(monthly_summary,
     x = "Month",
     y = "Average Concentration",
     color = "Pollutant",
-    title = "Monthly Average CO and O3 Concentrations (2018–2020)",
+    title = "Monthly Average CO and O3 Concentrations",
     subtitle = "Error bars show 95% confidence intervals"
   ) +
   theme_minimal()
@@ -141,6 +141,8 @@ p1 <- ggplot(monthly_summary,
 p1
 
 ```
+
+
 ## Second Plot
 
 ```{r}
