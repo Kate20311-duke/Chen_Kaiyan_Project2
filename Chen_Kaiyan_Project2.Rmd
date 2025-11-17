@@ -1,0 +1,175 @@
+---
+title: "Chen_Kaiyan_Project2"
+author: "Kaiyan Chen"
+date: "2025-11-17"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,     
+  message = FALSE,
+  warning = FALSE
+)
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+```
+
+```{r function}
+
+# Define a function to clean and summarize daily air quality data
+process_air_data <- function(file_path) {
+  raw <- read_csv(file_path)      # Read the raw CSV file
+  data <- raw |>
+    # Rename key variables:
+      # - Date column to "date"
+      # - Long descriptive column names to short pollutant names (co, pm25, o3)
+    rename(
+      date  = Date,
+      co    = `Daily Max 8-hour CO Concentration`,
+      pm25  = `Daily Mean PM2.5 Concentration`,
+      o3    = `Daily Max 8-hour Ozone Concentration`
+    )
+  
+  # Convert the date variable from character to Date type
+  data <- data |>
+    mutate(
+      date = mdy(date)   
+    )
+  
+  # Remove completely duplicated rows
+
+  data <- data |>
+    distinct()
+  
+  # Replace negative pollutant values with 0
+  pollutants <- c("co", "pm25", "o3")
+  data <- data |>
+    mutate(across(all_of(pollutants),
+                  ~ ifelse(.x < 0, 0, .x)))
+  
+  # Aggregate to daily averages for each pollutant.
+  data_daily <- data |>
+    group_by(date) |>
+    summarise(
+      co   = mean(co,  na.rm = TRUE),
+      pm25 = mean(pm25, na.rm = TRUE),
+      o3   = mean(o3,  na.rm = TRUE),
+      .groups = "drop"
+    )
+  # Return the cleaned dataset
+  return(data_daily)
+}
+```
+
+```{r Running}
+# Apply the function to each year's data file
+air_2018 <- process_air_data("data/AQ_2018.csv")
+air_2019 <- process_air_data("data/AQ_2019.csv")
+air_2020 <- process_air_data("data/AQ_2020.csv")
+
+# Add a "year" variable
+air_2018 <- air_2018 |> mutate(year = 2018)
+air_2019 <- air_2019 |> mutate(year = 2019)
+air_2020 <- air_2020 |> mutate(year = 2020)
+
+# Combine all three years into one dataset
+air_all <- bind_rows(air_2018, air_2019, air_2020)
+```
+
+```{r Before Plot}
+# Create month variables to support plotting and aggregation:
+#  - month: numeric month (1–12)
+#  - month_lbl: abbreviated month label (Jan, Feb, ...)
+
+air_all <- air_all |>
+  mutate(
+    month = month(date),              # 1-12
+    month_lbl = month(date, label = TRUE, abbr = TRUE)  # Jan, Feb, ...
+  )
+```
+
+## First Plot
+
+```{r First plot}
+# Reshape the data to a long format to plot in the same plot
+air_long <- air_all |>
+  select(date, year, month, month_lbl, co, o3) |>
+  pivot_longer(
+    cols = c(co, o3),
+    names_to = "pollutant",
+    values_to = "value"
+  )
+
+# Compute monthly summary statistics for each pollutant
+monthly_summary <- air_long |>
+  group_by(month, month_lbl, pollutant) |>
+  summarise(
+    mean = mean(value, na.rm = TRUE),
+    sd   = sd(value, na.rm = TRUE),  # standard deviation
+    n    = sum(!is.na(value)), # sample size
+    se   = sd / sqrt(n), # standard error
+    lower = mean - 1.96 * se, # 95% CI
+    upper = mean + 1.96 * se,
+    .groups = "drop"
+  )
+
+# Create the first plot
+p1 <- ggplot(monthly_summary,
+             aes(x = month_lbl,
+                 y = mean,
+                 color = pollutant,
+                 group = pollutant)) +
+  geom_line() +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = lower, ymax = upper),
+                width = 0.1) +
+  labs(
+    x = "Month",
+    y = "Average Concentration",
+    color = "Pollutant",
+    title = "Monthly Average CO and O3 Concentrations (2018–2020)",
+    subtitle = "Error bars show 95% confidence intervals"
+  ) +
+  theme_minimal()
+
+p1
+
+```
+## Second Plot
+
+```{r}
+# Compute monthly mean PM2.5 for each year
+pm_monthly <- air_all |>
+  group_by(year, month, month_lbl) |>
+  summarise(
+    mean_pm25 = mean(pm25, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Create the second plot
+p2 <- ggplot(pm_monthly,
+             aes(x = month_lbl,
+                 y = mean_pm25,
+                 color = factor(year),
+                 group = year)) +
+  geom_line() +
+  geom_point(size = 2) +
+  labs(
+    x = "Month",
+    y = "Average PM2.5 Concentration",
+    color = "Year",
+    title = "Monthly Average PM2.5 Concentrations by Year"
+  ) +
+  theme_minimal()
+
+p2
+
+```
+
+
+
+
