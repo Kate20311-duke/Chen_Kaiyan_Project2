@@ -87,8 +87,10 @@ air_all <- bind_rows(air_2018, air_2019, air_2020)
 
 air_all <- air_all |>
   mutate(
-    month = month(date),              # 1-12
-    month_lbl = month(date, label = TRUE, abbr = TRUE)  # Jan, Feb, ...
+    month = month(date),                               # 1–12
+    month_lbl = factor(month,
+                        levels = 1:12,
+                        labels = month.abb)           # Jan, Feb, ...
   )
 ```
 
